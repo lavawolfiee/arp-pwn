@@ -150,7 +150,7 @@ def main(args: argparse.Namespace) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='ARP network scanner')
+    parser = argparse.ArgumentParser(prog='ARP spoofer')
     parser.add_argument('-v', '--victim', type=str, help='Victim IP address', required=True)
     parser.add_argument('-g', '--gateway', type=str, help='Gateway IP address', required=True)
     parser.add_argument('-t', '--timeout', type=float, help='Timeout between ARP packets (seconds)',
