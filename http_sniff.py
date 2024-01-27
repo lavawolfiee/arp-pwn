@@ -20,7 +20,7 @@ BRIGHT = Style.BRIGHT
 
 def sniff_packets(iface: str | None = None, show_raw: bool = True) -> None:
     """
-    Sniff http packets with `iface`, if None (default), then the
+    Sniff http packets on 80 port with `iface`, if None (default), then the
     Scapy's default interface is used
     """
 
@@ -39,7 +39,6 @@ def process_packet(packet: scapy.packet.Packet, show_raw=True):
         url = packet[HTTPRequest].Host.decode() + packet[HTTPRequest].Path.decode()
         # get the requester's IP Address
         ip = packet[IP].src
-        # get the request method
         method = packet[HTTPRequest].Method.decode()
         print(f"{GREEN}[+]{RESET} {BRIGHT}{ip}{RESET} requested {BRIGHT}{url}{RESET} with {BRIGHT}{method}{RESET}")
 

