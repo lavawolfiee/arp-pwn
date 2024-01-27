@@ -85,7 +85,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog='HTTP redirector')
-    parser.add_argument('-u', '--url', type=str, help="URL to redirect to. Default is rick rolls :)",
+    parser.add_argument('-u', '--url', type=str, help="URL to redirect to. Default is rick roll :D",
                         default="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     args = parser.parse_args()
 
